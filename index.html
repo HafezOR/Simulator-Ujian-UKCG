@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulator Ujian UKCG - Bahagian A</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+
+    <!-- Setup Screen -->
+    <div id="setup-screen" class="max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg fade-in">
+        <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Simulator Ujian UKCG<br><span class="text-gray-500 text-lg">Bahagian A</span></h1>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-semibold mb-2">Set Masa (Minit):</label>
+            <input type="number" id="timer-input" value="30" min="1" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div class="mb-8">
+            <label class="block text-sm font-semibold mb-3">Pilih Bilangan Soalan:</label>
+            <div class="space-y-3">
+                <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition">
+                    <input type="radio" name="q-count" value="all" checked class="w-4 h-4 text-blue-600">
+                    <span class="ml-3 font-medium">Semua (336 Soalan)</span>
+                </label>
+                <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition">
+                    <input type="radio" name="q-count" value="200" class="w-4 h-4 text-blue-600">
+                    <span class="ml-3 font-medium">Rawak (200 Soalan)</span>
+                </label>
+            </div>
+        </div>
+
+        <button onclick="startExam()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-md">
+            Mula Ujian
+        </button>
+    </div>
+
+    <!-- Exam Screen -->
+    <div id="exam-screen" class="hidden max-w-2xl mx-auto mt-6 p-4 fade-in">
+        <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-lg shadow-sm">
+            <div class="text-lg font-bold text-blue-600" id="timer-display">00:00</div>
+            <div class="text-sm font-semibold text-gray-500" id="progress-text">Soalan 1 / 200</div>
+        </div>
+
+        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+            <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+
+        <div class="bg-white p-8 rounded-2xl shadow-xl mb-8 min-h-[200px] flex items-center justify-center text-center">
+            <p id="question-text" class="text-xl md:text-2xl font-semibold leading-relaxed"></p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <button onclick="handleAnswer('Setuju')" class="bg-white border-2 border-green-500 text-green-600 font-bold py-6 rounded-2xl hover:bg-green-500 hover:text-white transition-all text-xl shadow-sm uppercase tracking-wider">
+                Setuju
+            </button>
+            <button onclick="handleAnswer('Tidak Setuju')" class="bg-white border-2 border-red-500 text-red-600 font-bold py-6 rounded-2xl hover:bg-red-500 hover:text-white transition-all text-xl shadow-sm uppercase tracking-wider">
+                Tidak Setuju
+            </button>
+        </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="result-screen" class="hidden max-w-4xl mx-auto mt-10 p-6 fade-in">
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 text-center">
+            <h2 class="text-3xl font-bold mb-6">Keputusan Ujian</h2>
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <div class="p-4 bg-blue-50 rounded-xl">
+                    <p class="text-sm text-gray-500 uppercase font-bold">Skor Akhir</p>
+                    <p class="text-3xl font-bold text-blue-600" id="final-score">0/0</p>
+                </div>
+                <div class="p-4 bg-green-50 rounded-xl">
+                    <p class="text-sm text-gray-500 uppercase font-bold">Betul</p>
+                    <p class="text-3xl font-bold text-green-600" id="total-correct">0</p>
+                </div>
+                <div class="p-4 bg-red-50 rounded-xl">
+                    <p class="text-sm text-gray-500 uppercase font-bold">Salah</p>
+                    <p class="text-3xl font-bold text-red-600" id="total-wrong">0</p>
+                </div>
+            </div>
+            <button onclick="location.reload()" class="bg-gray-800 text-white px-8 py-3 rounded-lg font-bold hover:bg-gray-900 transition">
+                Ambil Ujian Semula
+            </button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="p-6 border-b">
+                <h3 class="text-xl font-bold">Analisis Jawapan</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="p-4 border-b font-bold text-sm text-gray-600">No. Asal</th>
+                            <th class="p-4 border-b font-bold text-sm text-gray-600">Soalan</th>
+                            <th class="p-4 border-b font-bold text-sm text-gray-600">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-table-body">
+                        <!-- Rows will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questionBank = [
+            { id: 1, text: "Adalah amalan biasa bagi setiap orang membuat kesilapan", correct: "Tidak Setuju" },
+            { id: 2, text: "Adalah sukar untuk saya mengawal emosi apabila saya jatuh sakit", correct: "Tidak Setuju" },
+            { id: 3, text: "Adalah tanggungjawab guru memberitahu murid tentang ajaran kolot ibu bapanya", correct: "Tidak Setuju" },
+            { id: 4, text: "Apa-apa kesilapan yang telah berlaku, tidak perlu direnung kembali", correct: "Tidak Setuju" },
+            { id: 5, text: "Apabila bekerja dengan rakan sejawat, biasanya saya banyak memberi arahan daripada mengikuti kata mereka", correct: "Tidak Setuju" },
+            { id: 6, text: "Apabila berlakunya kesilapan, saya hendak cari alasan demi melepaskan tanggungjawab", correct: "Tidak Setuju" },
+            { id: 7, text: "Apabila kawan saya berbual-bual, saya pilih mengundur diri", correct: "Tidak Setuju" },
+            { id: 8, text: "Apabila saya sibuk, saya minta adik menolong saya", correct: "Tidak Setuju" },
+            { id: 9, text: "Apabila saya telah membuat keputusan, tiada orang boleh menghalang saya", correct: "Tidak Setuju" },
+            { id: 10, text: "Apabila saya telah membuat keputusan, tidak ada orang boleh menghalang saya melaksanakannya", correct: "Tidak Setuju" },
+            { id: 11, text: "Berbincang dengan rakan sejawat adalah akan merugikan masa", correct: "Tidak Setuju" },
+            { id: 12, text: "Di dalam dunia penuh persaingan ini, kita mesti berwaspada tindakan kawan baik", correct: "Tidak Setuju" },
+            { id: 13, text: "Di dalam mesyuarat, saya banyak mendengar dan jarang mengambil inisiatif berucap", correct: "Tidak Setuju" },
+            { id: 14, text: "Falsafah hidup saya ialah bebas daripada peraturan dan budaya lama", correct: "Tidak Setuju" },
+            { id: 15, text: "Fikiran saya sering kurang senang apabila menghadapi masalah", correct: "Tidak Setuju" },
+            { id: 16, text: "Guru kelas bukan guru disiplin", correct: "Tidak Setuju" },
+            { id: 17, text: "Hanya buat ulangkaji pada saat-saat akhir supaya mudah lupa sewaktu dalam peperiksaan", correct: "Tidak Setuju" },
+            { id: 18, text: "Inilah hakikat sebenar bahawa manusia mementingkan diri sendiri", correct: "Tidak Setuju" },
+            { id: 19, text: "Jika ada orang sudi membuat kerja untuk saya, saya serahkan kepadanya serta merta", correct: "Tidak Setuju" },
+            { id: 20, text: "Jika dikritik, saya boleh membalas dengan kritikan yang lebih tajam", correct: "Tidak Setuju" },
+            { id: 21, text: "Jika kawan saya tidak membantu, saya akan memutuskan hubungan dengannya", correct: "Tidak Setuju" },
+            { id: 22, text: "Jika kawan tidak membalas budi, saya tentunya tidak akan menolongnya lagi", correct: "Tidak Setuju" },
+            { id: 23, text: "Jika kita merendah diri, orang lain akan pandang rendah terhadap kita", correct: "Tidak Setuju" },
+            { id: 24, text: "Jika prestasi kerja saya tidak memuaskan hati, saya akan tukar kerja yang lain", correct: "Tidak Setuju" },
+            { id: 25, text: "Jika saya ditimpa malang, saya akan meminta nasihat daripada tukang titik", correct: "Tidak Setuju" },
+            { id: 26, text: "Jika saya gagal, saya tidak akan mencuba lagi", correct: "Tidak Setuju" },
+            { id: 27, text: "Jika saya tidak berpuas hati, saya akan memberi teguran tanpa mengira kedudukan sesorang", correct: "Tidak Setuju" },
+            { id: 28, text: "Jika saya tidak dipilih mengikut khursus perguruan, masa depan saya adalah gelap", correct: "Tidak Setuju" },
+            { id: 29, text: "Jika sesorang bertanyakan soalan yang bodoh, saya tidak mungkin boleh menahan ketawa", correct: "Tidak Setuju" },
+            { id: 30, text: "Kepentingan diri harus diutamakan", correct: "Tidak Setuju" },
+            { id: 31, text: "Kerja saya jarang mendapat perhatian orang", correct: "Tidak Setuju" },
+            { id: 32, text: "Kurang wajar membuat persiapan awal walaupun ada masa lapang", correct: "Tidak Setuju" },
+            { id: 33, text: "Masalah disiplin biasanya ditimbulkan oleh murid nakal", correct: "Tidak Setuju" },
+            { id: 34, text: "Memberi pujian kepada orang bawahan adalah amat memalukan", correct: "Tidak Setuju" },
+            { id: 35, text: "Memberi sumbangan kerana mengharapkan balasan yang diidamkan", correct: "Tidak Setuju" },
+            { id: 36, text: "Membuat kesilapan adalah perkara yang amat memalukan", correct: "Tidak Setuju" },
+            { id: 37, text: "Nasib saya ditakdirkan malang, apa yang saya buat tentu ada kesilapan", correct: "Tidak Setuju" },
+            { id: 38, text: "Orang yang memuji saya biasanya mempunyai niat jahat", correct: "Tidak Setuju" },
+            { id: 39, text: "Pemimpin boleh mendapat lebih banyak faedah daripada dipimpin", correct: "Tidak Setuju" },
+            { id: 40, text: "Saya akan hukum murid seperti cara digunakan guru masa dahulu", correct: "Tidak Setuju" },
+            { id: 41, text: "Saya akan berasa bersyukur apabila tiada orang setanding dengan prestasi saya", correct: "Tidak Setuju" },
+            { id: 42, text: "Saya benci orang yang meminta derma apabila ditimpa kemalangan", correct: "Tidak Setuju" },
+            { id: 43, text: "Saya berpendapat kurang sesuai menentukan matlamat hidup sebelum bekerja", correct: "Tidak Setuju" },
+            { id: 44, text: "Saya biasanya menyempurnakan kerja pada saat yang terakhir", correct: "Tidak Setuju" },
+            { id: 45, text: "Saya jarang memberitahu apa yang saya fikirkan kepada mana-mana pihak", correct: "Tidak Setuju" },
+            { id: 46, text: "Saya kurang bertanya kepada orang kerana takut malu", correct: "Tidak Setuju" },
+            { id: 47, text: "Saya kurang faham kenapa ramai kawan tidak percaya kata saya", correct: "Tidak Setuju" },
+            { id: 48, text: "Saya kurang mengambil perhatian terhadap perkara yang saya kurang minati", correct: "Tidak Setuju" },
+            { id: 49, text: "Saya kurang senang apabila ada orang berprestasi lebih baik daripada saya", correct: "Tidak Setuju" },
+            { id: 50, text: "Saya kurang senang apabila diarah buat kerja", correct: "Tidak Setuju" },
+            { id: 51, text: "Saya rajin bekerja dengan harapan majikan akan memberi kenaikkan gaji", correct: "Tidak Setuju" },
+            { id: 52, text: "Saya rasa kurang berupaya sesuaikan diri dengan orang yang mengamalkan budaya lain", correct: "Tidak Setuju" },
+            { id: 53, text: "Saya rasa lega apabila berjaya menolak permintaan orang", correct: "Tidak Setuju" },
+            { id: 54, text: "Saya rasa senang hati kerana rakan sejawat adalah lebih buruk daripada saya", correct: "Tidak Setuju" },
+            { id: 55, text: "Saya segan mengucapkan tahniah kepada rakan sejawat yang mencapai prestasi cemerlang", correct: "Tidak Setuju" },
+            { id: 56, text: "Saya sentiasa lupa perkara yang kurang penting", correct: "Tidak Setuju" },
+            { id: 57, text: "Saya suka bersendirian, jadi tidak berharap ada ramai kawan", correct: "Tidak Setuju" },
+            { id: 58, text: "Saya suk memberi arahan dan dibimbing", correct: "Tidak Setuju" },
+            { id: 59, text: "Saya tidak menghukum murid kerana bimbang murid membalas dendam", correct: "Tidak Setuju" },
+            { id: 60, text: "Saya tidak suka orang yang sering memberi nasihat", correct: "Tidak Setuju" },
+            { id: 61, text: "Sebaik sahaja membuat keputusan, saya akan terus mengambil tindakan tanpa keraguan", correct: "Tidak Setuju" },
+            { id: 62, text: "Seseorang yang tidak mementingkan diri, suatu hari nanti akan menjadi mangsa", correct: "Tidak Setuju" },
+            { id: 63, text: "Sekolah bertanggungjawab dengan sebarang tindakan guru", correct: "Tidak Setuju" },
+            { id: 64, text: "Sungguhpun tidak setuju saya masih berpura-pura setuju", correct: "Tidak Setuju" },
+            { id: 65, text: "Tiada gunanya mengkaji semula prestasi yang telah dinilai", correct: "Tidak Setuju" },
+            { id: 66, text: "Tiada orang yang memahami kehendak daya", correct: "Tidak Setuju" },
+            { id: 67, text: "Tidak boleh berjenaka semasa bekerja", correct: "Tidak Setuju" },
+            { id: 68, text: "Untuk mendapat sesuatu yang saya idamkan, saya rela melakukan apa-apa tindakan", correct: "Tidak Setuju" },
+            { id: 69, text: "Untuk menjaga imej, saya berpura pura faham kata orang", correct: "Tidak Setuju" },
+            { id: 70, text: "Apabila dituduh, saya akan membalas tuduhan tersebut", correct: "Tidak Setuju" },
+            { id: 71, text: "Apabila marah, saya menunjukkan dengan air muka saya", correct: "Tidak Setuju" },
+            { id: 72, text: "Berani kerana salah", correct: "Tidak Setuju" },
+            { id: 73, text: "Berani mencuba jika ada risiko", correct: "Tidak Setuju" },
+            { id: 74, text: "Daya ingatan saya lemah, tetapi menjejaskan prestasi mengajar", correct: "Tidak Setuju" },
+            { id: 75, text: "Guru yang berjenaka tidak akan dihormati muridnya", correct: "Tidak Setuju" },
+            { id: 76, text: "Guru yang bersifat sabar merupakan kelemahan mengawal emosi muridnya", correct: "Tidak Setuju" },
+            { id: 77, text: "Hanya guru yang berpengalaman boleh mengawal masalh displin dalam bilik darjah", correct: "Tidak Setuju" },
+            { id: 78, text: "Jika ada risiko gagal, cara yang terbaik ialah mengundur diri", correct: "Tidak Setuju" },
+            { id: 79, text: "Jika dihukum, murid tentu membalas dendam", correct: "Tidak Setuju" },
+            { id: 80, text: "Jika guru tidak mahir melakukan demonstrasi, guru boleh berpura-pura mengajak murid melakukannya", correct: "Tidak Setuju" },
+            { id: 81, text: "Jika hendak belajar berkesan, mesti ada cukup wang", correct: "Tidak Setuju" },
+            { id: 82, text: "Jika kerja saya dikritik, saya tidak akan menghiraukannya", correct: "Tidak Setuju" },
+            { id: 83, text: "Jika menghadapi perbuatan salah, saya berdiam diri sahaja", correct: "Tidak Setuju" },
+            { id: 84, text: "Jika murid saya tidak mampu mengikuti pelajaran dalam bilik darjah, saya akan nasihatnya belajar di pusat tuisyen", correct: "Tidak Setuju" },
+            { id: 85, text: "Jika saya dikritik, saya akan berpura-pura tidak mendengar", correct: "Tidak Setuju" },
+            { id: 86, text: "Jika saya dituduh sesorang, saya berharap simpati daripada kawan saya", correct: "Tidak Setuju" },
+            { id: 87, text: "Jika saya lakukan kerja salah, saya akan cub mencari alasan", correct: "Tidak Setuju" },
+            { id: 88, text: "Jika saya menjadi ahli kesatuan guru, saya serahkan kepada kesatuan guru untuk membela nasib saya", correct: "Tidak Setuju" },
+            { id: 89, text: "Jika sesorang berilmu pengetahuan, tanpa latihan pengurusan pun boleh menjadi guru yang cekap dan efektif", correct: "Tidak Setuju" },
+            { id: 90, text: "Jika terlalu ditekan, saya mudah menanggung tekanan itu", correct: "Tidak Setuju" },
+            { id: 91, text: "Jika timbul masalah mengajar, saya tidak akan meminta nasihat daripada orang lain", correct: "Tidak Setuju" },
+            { id: 92, text: "Kecerdasan emosi adalah diwarisi dan tidak boleh berubah", correct: "Tidak Setuju" },
+            { id: 93, text: "Kemahiran mengajar banyak bergantung kepada bakat individu", correct: "Tidak Setuju" },
+            { id: 94, text: "Kerja hanya dapat diselesaikan dengan sempurna jika ada orang membantu", correct: "Tidak Setuju" },
+            { id: 95, text: "Komunikasi bukan lisan hanya digunakan untuk mengajar murid yang menghadapi masalah pendengaran", correct: "Tidak Setuju" },
+            { id: 96, text: "Kurang baik merendah diri di depan orang yang boleh menolong kita belajar", correct: "Tidak Setuju" },
+            { id: 97, text: "Masa adalah emas, jadi saya sentiasa cuba belajar lebih mata pelajaran serentak", correct: "Tidak Setuju" },
+            { id: 98, text: "Menangani kekecewaan atau ketegangan adalah bergantung semata-mata kepada darjah kecerdasan individu", correct: "Tidak Setuju" },
+            { id: 99, text: "Murid akan takut melakukan masalah displin jika ada peraturan bilik darjah dipamerkan", correct: "Tidak Setuju" },
+            { id: 100, text: "Murid yang malas belajar harus dihukum", correct: "Tidak Setuju" },
+            { id: 101, text: "Pekerjaan guru tetap terjamin selama guru tidak terlibat dalam kes jenayah", correct: "Tidak Setuju" },
+            { id: 102, text: "Perasaan manusia tidak mudah difahami jika tidak diekspresi dengan bahasa yang sebenar", correct: "Tidak Setuju" },
+            { id: 103, text: "Saya akan ambil inisiatif berbincang kesilapan rakan sejawat dan memberi nasihat, demi kemajuan murid", correct: "Tidak Setuju" },
+            { id: 104, text: "Saya akan mengundur diri jika melakukan sesuatu yang kurang manis", correct: "Tidak Setuju" },
+            { id: 105, text: "Saya berhibur untuk menghilangkan kebosanan bekerja", correct: "Tidak Setuju" },
+            { id: 106, text: "Saya bersikap proaktif dan tidak teragak-agak mencelah ketika dalam perbincangan", correct: "Tidak Setuju" },
+            { id: 107, text: "Saya berusaha mengikiskan pengalaman pahit yang sering mengganggu saya", correct: "Tidak Setuju" },
+            { id: 108, text: "Saya hanya membaca untuk menyeronokkan hati sahaja", correct: "Tidak Setuju" },
+            { id: 109, text: "Saya kurang mampu menghadapi kegagalan", correct: "Tidak Setuju" },
+            { id: 110, text: "Saya mampu melakukan sebarang kerja yang orang lain tidak mampu melaksanakannya", correct: "Tidak Setuju" },
+            { id: 111, text: "Saya menjauhi kawan yang mengkritik saya", correct: "Tidak Setuju" },
+            { id: 112, text: "Saya sentiasa berusaha bersungguh-sungguh dalam kerja yang saya mampu sahaja", correct: "Tidak Setuju" },
+            { id: 113, text: "Saya tidak gembira jika dikongkong dengan peraturan tetap", correct: "Tidak Setuju" },
+            { id: 114, text: "Saya tidak memberi simpati kepada orang yang gagal", correct: "Tidak Setuju" },
+            { id: 115, text: "Saya tidak mudah bersosial dan bermesra dengan orang yang baru dikenali", correct: "Tidak Setuju" },
+            { id: 116, text: "Saya tidak mudah percaya kepada orang yang boleh membantu saya", correct: "Tidak Setuju" },
+            { id: 117, text: "Saya tidak suka kehidupan yang ada persaingan", correct: "Tidak Setuju" },
+            { id: 118, text: "Saya tidak sukamencuba sesuatu yang kurang pasti kejayaannya", correct: "Tidak Setuju" },
+            { id: 119, text: "Sebarang masalah disiplin yang ditimbulkan dalam kelas harus dirujuk kepada guru disiplin", correct: "Tidak Setuju" },
+            { id: 120, text: "Sekiranya tidak ada kerja, saya akan tidur sepuas-puasnya", correct: "Tidak Setuju" },
+            { id: 121, text: "Selama saya telah berusaha, sama ada murid boleh mengikuti pelajaran atau tidak bukan lagi tanggungjawab saya", correct: "Tidak Setuju" },
+            { id: 122, text: "Semasa saya sibuk, saya akan menolak sebarang permintaan orang", correct: "Tidak Setuju" },
+            { id: 123, text: "Sewaktu ada ramai orang, saya hanya mendengar sahaja", correct: "Tidak Setuju" },
+            { id: 124, text: "Sifat lemah lembut seseorang guru adalah tidak sesuai untuk mengajar sekolah lelaki", correct: "Tidak Setuju" },
+            { id: 125, text: "Suara yang kurang menarik, oleh itu saya berdiam diri", correct: "Tidak Setuju" },
+            { id: 126, text: "Tanggungjawab guru adalah menasihati ibu bapa supaya bertanggungjawab dengan kelakuan anak mereka", correct: "Tidak Setuju" },
+            { id: 127, text: "Tekanan saya hadapi menjawab 135 soalan INSAK dalam masa 30 minit amat membimbangkan", correct: "Tidak Setuju" },
+            { id: 128, text: "Tiada orang bergantung, kehidupan dunia ini tidak bermakna", correct: "Tidak Setuju" },
+            { id: 129, text: "Tidak mudah bagi seseorang menghapuskan perasaan kebimbangan kerana masalah yang sukar diselesaikan", correct: "Tidak Setuju" },
+            { id: 130, text: "Tidak mudah mengawal emosi marah apabila dikritik", correct: "Tidak Setuju" },
+            { id: 131, text: "Tugas guru ialah mengajar sahaja", correct: "Tidak Setuju" },
+            { id: 132, text: "Untuk menarik hati murid, guru harus bersifat autokratik", correct: "Tidak Setuju" },
+            { id: 133, text: "Untuk mendapat pandangan tinggi orang, saya berusaha menonjolkan diri apabila ada peluang", correct: "Tidak Setuju" },
+            { id: 134, text: "Untuk mengajar dengan penuh keyakinan guru harus mendapat sokongan dan pujian", correct: "Tidak Setuju" },
+            { id: 135, text: "Untuk mengawal displin, kita tidak harus beramah mesra dengan murid", correct: "Tidak Setuju" },
+            { id: 136, text: "Untuk mengelakkan masalah, saya bekerja secara bersendirian", correct: "Tidak Setuju" },
+            { id: 137, text: "Untuk menjaga air muka sendiri, saya sentiasa berdiam diri", correct: "Tidak Setuju" },
+            { id: 138, text: "Untuk menumpukan perhatian mengajar, saya tidak akan ada masa menceburi aktiviti di luar sekolah", correct: "Tidak Setuju" },
+            { id: 139, text: "Apabila naik marah, fikiran saya tidak tentu hala", correct: "Tidak Setuju" },
+            { id: 140, text: "Baik di sekolah rendah, mahupun di sekolah menengah, saya belajar dan bermain sendiri", correct: "Tidak Setuju" },
+            { id: 141, text: "Dalam keadaan mendesak, tidak perlu menimbang keputusan dengan teliti", correct: "Tidak Setuju" },
+            { id: 142, text: "Dalam perbincangan, saya kerap bercakap banyak, manakala orang lain hanya mendengar", correct: "Tidak Setuju" },
+            { id: 143, text: "Di khalayak ramai, saya biasanya berdiam diri", correct: "Tidak Setuju" },
+            { id: 144, text: "Dosa merebut keuntungan bukan halal boleh ditebus melalui memberi derma", correct: "Tidak Setuju" },
+            { id: 145, text: "Jika ada banyak kerja yang hendak diselesaikan, saya akan mulakan kerja yang saya suka terlebih dahulu", correct: "Tidak Setuju" },
+            { id: 146, text: "Jika diberi tugas yang saya tidak berminat, saya akan menyerahkannya kepada orang lain", correct: "Tidak Setuju" },
+            { id: 147, text: "Jika kemalangan berlaku, saya rela korbankan diri untuk menyelamatkan nyawa kawan", correct: "Tidak Setuju" },
+            { id: 148, text: "Jika kerja saya dikritik, hilanglah semangat terus bekerja", correct: "Tidak Setuju" },
+            { id: 149, text: "Jika peraturan tidak membawa sebarang faedah, saya tetap mematuhinya tanpa bantahan", correct: "Tidak Setuju" },
+            { id: 150, text: "Jika peserta menggunkan taktik kotor bertanding, saya pun gunakan taktik kotor", correct: "Tidak Setuju" },
+            { id: 151, text: "Jika saya ditimpa kemalangan, saya berharap ada orang rela memberi simpati dan bantuan", correct: "Tidak Setuju" },
+            { id: 152, text: "Jika sebarang dihukum berat, kita patut sampaikan rasa simpati", correct: "Tidak Setuju" },
+            { id: 153, text: "Jika tugas diberi kurang menarik, saya akan cadangkan orang lain selesaikan tugas tersebut", correct: "Tidak Setuju" },
+            { id: 154, text: "Lebih baik biar orang lain ambil inisiatif", correct: "Tidak Setuju" },
+            { id: 155, text: "Maklumat yang disiarkan dalam surat khabar adalah tepat dan benar", correct: "Tidak Setuju" },
+            { id: 156, text: "Menggunakan idea kreatif untuk melaksanakan sesuatu kerja adalah kurang selamat", correct: "Tidak Setuju" },
+            { id: 157, text: "Oleh sebab risiko, saya tidak ingin menjadi pemimpin", correct: "Tidak Setuju" },
+            { id: 158, text: "Orang membuat salah mesti dihukum serta-merta", correct: "Tidak Setuju" },
+            { id: 159, text: "Rasa bangga harus diketahui umum", correct: "Tidak Setuju" },
+            { id: 160, text: "Rasa cemburu memang ada jika orang lain mencapai prestasi yang lebih baik", correct: "Tidak Setuju" },
+            { id: 161, text: "Saya bersyukur kepada Tuhan kerana tanpa banyak berusaha pun boleh dapat hasil yang diharapkan", correct: "Tidak Setuju" },
+            { id: 162, text: "Saya bimbang bekerja secara individu", correct: "Tidak Setuju" },
+            { id: 163, text: "Saya hanya melaksanakan tugas mengikut sistem yang ditetapkan", correct: "Tidak Setuju" },
+            { id: 164, text: "Saya hanya suka berkawan dengan orang yang mengagumi saya", correct: "Tidak Setuju" },
+            { id: 165, text: "Saya kurang senang mengikut perintah orang", correct: "Tidak Setuju" },
+            { id: 166, text: "Saya melakukan kerja dengan cara muslihat demi kejayaan", correct: "Tidak Setuju" },
+            { id: 167, text: "Saya mudah meradang jika ada orang main taktik kotor", correct: "Tidak Setuju" },
+            { id: 168, text: "Saya pengikut idealisme, percaya semua adalah baik dan sempurna", correct: "Tidak Setuju" },
+            { id: 169, text: "Saya percaya kerja secara individu adalah sama dengan kerja kumpulan", correct: "Tidak Setuju" },
+            { id: 170, text: "Saya percaya semua bahan bacaan yang diterbitkan adalah sesuai dibaca", correct: "Tidak Setuju" },
+            { id: 171, text: "Saya pun tidak berani berhujah kerana takut diejek", correct: "Tidak Setuju" },
+            { id: 172, text: "Saya rasa selamat kerana ada kawan menolong", correct: "Tidak Setuju" },
+            { id: 173, text: "Saya rasa tertekan jika ada penyelia datang menilai kerja saya", correct: "Tidak Setuju" },
+            { id: 174, text: "Saya seorang bernasib baik, saya tidak belajar bersungguh-sungguh pun boleh lulus peperiksaan dengan keputusan cemerlang", correct: "Tidak Setuju" },
+            { id: 175, text: "Saya sering ambil inisatif meminjamkan barang daripada kawan", correct: "Tidak Setuju" },
+            { id: 176, text: "Saya sudah berpuas hati setakat kerja dapat diselesaikan", correct: "Tidak Setuju" },
+            { id: 177, text: "Saya suka mengkritik, termasuk perkara kecil yang ada kecacatan", correct: "Tidak Setuju" },
+            { id: 178, text: "Saya tidak ada kawan yang saya boleh meluahkan rahsia", correct: "Tidak Setuju" },
+            { id: 179, text: "Saya tidak akan bertolak-ansur dengan orang yang menentang saya", correct: "Tidak Setuju" },
+            { id: 180, text: "Saya tidak berharap ada penyelia yang suka mencari kelemahan saya", correct: "Tidak Setuju" },
+            { id: 181, text: "Saya tidak boleh kawal emosi marah apabila dituduh tanpa sebab", correct: "Tidak Setuju" },
+            { id: 182, text: "Saya tidak boleh kikiskan perasaan curiga terhadap niat orang", correct: "Tidak Setuju" },
+            { id: 183, text: "Saya tidak mahu bertanya kerana takut tersilap kata", correct: "Tidak Setuju" },
+            { id: 184, text: "Saya tidak meluahkan perasaan sebenar kepada sesiapa pun", correct: "Tidak Setuju" },
+            { id: 185, text: "Saya tidak mudah mesra dengan orang asing", correct: "Tidak Setuju" },
+            { id: 186, text: "Saya tidak suka berbincang dengan orang yang berbakat", correct: "Tidak Setuju" },
+            { id: 187, text: "Saya tidak suka membuat kerja yang ada jadual tetap", correct: "Tidak Setuju" },
+            { id: 188, text: "Saya tidak suka orang menggunakan kedudukannya menyerahkan tugas yang sukar diselesaikan kepada saya", correct: "Tidak Setuju" },
+            { id: 189, text: "Saya tidak sukakan kerja yang ada matlamat tetap", correct: "Tidak Setuju" },
+            { id: 190, text: "Sebagai ketua kumpulan, saya tidak perlu mendapat keputusan untuk tindakan", correct: "Tidak Setuju" },
+            { id: 191, text: "Selamanya kerja telah diselesaikan, sempurna atau tidak adalah kurang penting", correct: "Tidak Setuju" },
+            { id: 192, text: "Selepas kerja, saya suka berada di rumah bersendirian", correct: "Tidak Setuju" },
+            { id: 193, text: "Sumbangan saya tidak patut dilupai", correct: "Tidak Setuju" },
+            { id: 194, text: "Tanpa nasib baik, ada kebolehan pun tidak semestinya menjadi", correct: "Tidak Setuju" },
+            { id: 195, text: "Tiada latihan formal pun boleh menjadi guru cemerlang jika ada bakat", correct: "Tidak Setuju" },
+            { id: 196, text: "Tiada salahnya mengikut prinsip 'sukahati' melakukan kerja", correct: "Tidak Setuju" },
+            { id: 197, text: "Tidak adil bekerja lebih masa tanpa ganjaran", correct: "Tidak Setuju" },
+            { id: 198, text: "Walaupun ada matlamat yang nyata, saya tidak boleh yakin mencapai objektifnya", correct: "Tidak Setuju" },
+            { id: 199, text: "Walaupun arahan diberi kurang jelas, tidak elok meminta ketua ulang arahannya", correct: "Tidak Setuju" },
+            { id: 200, text: "Adalah sukar bagi orang mengawal emosi marahnya jika dia dihina", correct: "Tidak Setuju" },
+            { id: 201, text: "Adalah terlalu sukar bagi saya memahami orang yang bertujuan menipu", correct: "Tidak Setuju" },
+            { id: 202, text: "Apa yang saya dengar, biasanya saya cepat lupa", correct: "Tidak Setuju" },
+            { id: 203, text: "Dalam proses komunikasi, kita hanya perlu tumpukan perhatian kepada perkara penting sahaja", correct: "Tidak Setuju" },
+            { id: 204, text: "Jika ada orang mengejek saya, saya tidak teragak-agak menegur balik", correct: "Tidak Setuju" },
+            { id: 205, text: "Jika ada perkara peribadi yang lebih penting, saya akan tangguhkan kerja buat sementara", correct: "Tidak Setuju" },
+            { id: 206, text: "Jika dijemput memberi ucapan, saya harus menyedia draf ucapan terlebih dahulu", correct: "Tidak Setuju" },
+            { id: 207, text: "Jika hendak dikagumi, kita harus berlagak sebagai orang kaya", correct: "Tidak Setuju" },
+            { id: 208, text: "Jika hendak mendapat simpati, kita tidak bongkar hidup mewah didepan orang", correct: "Tidak Setuju" },
+            { id: 209, text: "Jika hendak nasihat atau bantuan, kita harus ambil hati orang", correct: "Tidak Setuju" },
+            { id: 210, text: "Jika saya tidak berjaya, saya pun harap kawan saya gagal", correct: "Tidak Setuju" },
+            { id: 211, text: "Jika tiada duit memberi sesuatu yang saya idamkan, saya akan meminjam dari institusi kewangan", correct: "Tidak Setuju" },
+            { id: 212, text: "Jika tidak dapat harapan sepenuhnya, saya tidak akan berusaha lagi", correct: "Tidak Setuju" },
+            { id: 213, text: "Kita harus bersikap waspada terhadap orang yang menjalankan tugas", correct: "Tidak Setuju" },
+            { id: 214, text: "Kita harus memenuhi keperluan diri sebelum memikir keperluan orang lain", correct: "Tidak Setuju" },
+            { id: 215, text: "Kita tidak boleh bersikap rendah diri semasa berkomunikasi", correct: "Tidak Setuju" },
+            { id: 216, text: "Menyebar ilmu palsu yang bukan niat jahat boleh dimaafkan", correct: "Tidak Setuju" },
+            { id: 217, text: "Merendah diri adalah sikap negatif seseorang", correct: "Tidak Setuju" },
+            { id: 218, text: "Murid yang berbuat dengan berturut-turut mesti berhenti sekolah", correct: "Tidak Setuju" },
+            { id: 219, text: "Orang yang menilai prestasi saya bertujuan menunjukkan status kedudukannya sahaja", correct: "Tidak Setuju" },
+            { id: 220, text: "Prestasi tidak boleh dinilai oleh diri sendiri", correct: "Tidak Setuju" },
+            { id: 221, text: "Saya akan putus asa jika kerja saya tidak dinilai sebagai cemerlang", correct: "Tidak Setuju" },
+            { id: 222, text: "Saya akan terus melaksanakan rancangan walaupun ada bantahan orang lain", correct: "Tidak Setuju" },
+            { id: 223, text: "Saya bekerja terus melaksanakan rancangan walaupun ada bantahan orang lain", correct: "Tidak Setuju" },
+            { id: 224, text: "Saya bekerja keras dengan harapan dapat kenaikan pangkat", correct: "Tidak Setuju" },
+            { id: 225, text: "Saya benci orang yang mengkritik saya tanpa kesedaran kesilapan diri", correct: "Tidak Setuju" },
+            { id: 226, text: "Saya bersa cemas apabila menghadapi masalah rumit", correct: "Tidak Setuju" },
+            { id: 227, text: "Saya berpura-pura berilmu pengetahuan supaya orang lain menghormati saya", correct: "Tidak Setuju" },
+            { id: 228, text: "Saya bukan orang kaya, jadi tidak perlu menyumbang kebajikan", correct: "Tidak Setuju" },
+            { id: 229, text: "Saya hanya baca buku dan majalah yang menghibur hati", correct: "Tidak Setuju" },
+            { id: 230, text: "Saya hanya menangis dalam situasi yang amat sedih", correct: "Tidak Setuju" },
+            { id: 231, text: "Saya jarang dapat puas hati daripada kerja yang saya lakukan", correct: "Tidak Setuju" },
+            { id: 232, text: "Saya jarang mendapat simpati untuk kesalahan yang saya lakukan", correct: "Tidak Setuju" },
+            { id: 233, text: "Saya jarang menyertai aktiviti sosial", correct: "Tidak Setuju" },
+            { id: 234, text: "Saya rasa jemu apabila orang tidak beri perhatian", correct: "Tidak Setuju" },
+            { id: 235, text: "Saya rasa kurang senang didampingi orang", correct: "Tidak Setuju" },
+            { id: 236, text: "Saya sering berusaha sembunyikan pemikiran saya demi melindungi diri", correct: "Tidak Setuju" },
+            { id: 237, text: "Saya sering mencela di antara cadangan yang saya tidak suka", correct: "Tidak Setuju" },
+            { id: 238, text: "Saya sering mengikut pimpinan kawan saya", correct: "Tidak Setuju" },
+            { id: 239, text: "Saya suka bersendirian, dan tidak suka bekerja secara kumpulan", correct: "Tidak Setuju" },
+            { id: 240, text: "Saya sukakankerja yang menghukum orang", correct: "Tidak Setuju" },
+            { id: 241, text: "Saya tidak akur kepada keputusan pertandingan kerana mengesyaki hakim berat sebelah", correct: "Tidak Setuju" },
+            { id: 242, text: "Saya tidak berminat menyertai pertandingan kerana takut salah", correct: "Tidak Setuju" },
+            { id: 243, text: "Saya tidak boleh memaafkan orang yang saya benci", correct: "Tidak Setuju" },
+            { id: 244, text: "Saya tidak mampu menolong, sedangkan ada banyak orang dalam kesusahan", correct: "Tidak Setuju" },
+            { id: 245, text: "Saya tidak suka kerja yang mencabar dan berat", correct: "Tidak Setuju" },
+            { id: 246, text: "Saya tidak suka menolong idea baru kerana masalah mungkin berlaku", correct: "Tidak Setuju" },
+            { id: 247, text: "Saya tidak suka orang yang sengaja menunjukkan bakat diri", correct: "Tidak Setuju" },
+            { id: 248, text: "Sebarang teguran atau kritikan biasanya mengandungi niat jahat", correct: "Tidak Setuju" },
+            { id: 249, text: "Sedikit kesilapan pun tak apa, kerana saya sudah beri banyak sumbangan", correct: "Tidak Setuju" },
+            { id: 250, text: "Semangat saya akan patah jika kerja saya tidak mencapai objektifnya", correct: "Tidak Setuju" },
+            { id: 251, text: "Sesiapa berbuat salah mesti dihukum dengan berat", correct: "Tidak Setuju" },
+            { id: 252, text: "Setipa manusia mementingkan diri lebih daripada orang lain", correct: "Tidak Setuju" },
+            { id: 253, text: "Sukar bagi kita menganalisis niat orang yang sebenar", correct: "Tidak Setuju" },
+            { id: 254, text: "Tanpa ganjaran, saya tidak buat kerja di luar masa bertugas", correct: "Tidak Setuju" },
+            { id: 255, text: "Tiada dorongan, saya tidak berani mencuba ideabaru", correct: "Tidak Setuju" },
+            { id: 256, text: "Tidak perlu menghulur derma kepada mangsa kerana telah ada ramai orang menderma", correct: "Tidak Setuju" },
+            { id: 257, text: "Tidak salah menerima hadiah sebagai penghargaan daripada orang lain yang saya beri pertolongan", correct: "Tidak Setuju" },
+            { id: 258, text: "Tugas berat boleh disiapkan melebihi masa yang ditetapkan", correct: "Tidak Setuju" },
+            { id: 259, text: "Tugas guru ialah mengajar sahaja", correct: "Tidak Setuju" },
+            { id: 260, text: "Untuk hidup mewah, saya sanggup buat kerja sambilan", correct: "Tidak Setuju" },
+            { id: 261, text: "Untuk mencapai kejayaan, menyalahgunakan kuasa pun tak apa", correct: "Tidak Setuju" },
+            { id: 262, text: "Walaupun komputer milik kawan, saya tidak perlu mendapat kebenaran untuk menggunakannya", correct: "Tidak Setuju" },
+            { id: 263, text: "Walaupun saya berusaha namun hasilnya kurang memuaskan", correct: "Tidak Setuju" },
+            { id: 264, text: "Walaupun saya tidak mengikut ajaran agama, saya mempunyai bekat dan keboleh", correct: "Tidak Setuju" },
+            { id: 265, text: "Jika kerja saya dikritik, saya tidak akan menghiraukannya", correct: "Tidak Setuju" },
+            { id: 266, text: "Untuk menarik hati murid, guru harus bersifat autokratik", correct: "Tidak Setuju" },
+            { id: 267, text: "Saya kurang mampu menghadapi kegagalan", correct: "Tidak Setuju" },
+            { id: 268, text: "Perasaan manusia tidak mudah difahami jika tidak diekspresi dengan bahasa yang sebenar", correct: "Tidak Setuju" },
+            { id: 269, text: "Berani mencuba jika tiada risiko", correct: "Tidak Setuju" },
+            { id: 270, text: "Kerja hanya dapat diselesaikan dengan sempurna jika ada orang membantu", correct: "Tidak Setuju" },
+            { id: 271, text: "Saya hanya membaca untuk menyeronokkan hati sahaja", correct: "Tidak Setuju" },
+            { id: 272, text: "Untuk mengajar dengan penuh keyakinan, guru harus mendapat sokongan dan pujian", correct: "Tidak Setuju" },
+            { id: 273, text: "Tidak mudah mengawak emosi marah apabila dikritik", correct: "Tidak Setuju" },
+            { id: 274, text: "Untuk mengawal disiplin, kita tidak harus beramah mesra dengan murid", correct: "Tidak Setuju" },
+            { id: 275, text: "Jika kerja saya dikritik, saya tidak akan menghiraukannya", correct: "Tidak Setuju" },
+            { id: 276, text: "Jika menghadapi perbuatan salah, saya berdiam diri sahaja", correct: "Tidak Setuju" },
+            { id: 277, text: "Saya tidak suka membaca sesuatu yang kurang pasti kerjayanya", correct: "Tidak Setuju" },
+            { id: 278, text: "Hanya guru yang berpengalaman boleh mengawal masalah disiplin dalam bilik darjah", correct: "Tidak Setuju" },
+            { id: 279, text: "Jika timbul masalah mengajar, saya tidak akan meminta nasihat daripada orang lain", correct: "Tidak Setuju" },
+            { id: 280, text: "Kecerdasan emosi adalah diwarisi dan tidak boleh diubah", correct: "Tidak Setuju" },
+            { id: 281, text: "Apabila marah, saya menunjukkan dengan air muka saya", correct: "Tidak Setuju" },
+            { id: 282, text: "Saya bersikap proaktif dan tidak teragak-agak mencelah ketika dalam perbincangan", correct: "Tidak Setuju" },
+            { id: 283, text: "Tanggungjawab guru adalah menasihati ibu bapa supaya bertanggungjawab dengan kelakuan anak mereka", correct: "Tidak Setuju" },
+            { id: 284, text: "Di dalam dunia penuh peresiangan ini, kita mesti berwaspada tindakan kawan baik", correct: "Tidak Setuju" },
+            { id: 285, text: "Saya biasanya menyempurnakan kerja pada saaat yang terakhir", correct: "Tidak Setuju" },
+            { id: 286, text: "Jika kawan saya tidak membantu, saya akan memutuskan hubungan dengannya", correct: "Tidak Setuju" },
+            { id: 287, text: "Kurang wajar membuat persiapan awal walaupun ada masa lapang", correct: "Tidak Setuju" },
+            { id: 288, text: "Jika saya ditimpa malang, saya akan meminta nasihat daripada tukang titik", correct: "Tidak Setuju" },
+            { id: 289, text: "Memberi pujian kepada orang bawahan adalah amat memalukan", correct: "Tidak Setuju" },
+            { id: 290, text: "Jika saya tidak dipilih mengikuti khursus pengurusan, masa depan saya adalah gelap", correct: "Tidak Setuju" },
+            { id: 291, text: "Saya tidak menghukum murid kerana bimbang murid membalas dendam", correct: "Tidak Setuju" },
+            { id: 292, text: "Di dalam mesyuarat, saya banyak mendengar dan jarang mengambil inisiatif berucap", correct: "Tidak Setuju" },
+            { id: 293, text: "Inilah hakikat sebenar bahawa manusia mementingkan diri sendiri", correct: "Tidak Setuju" },
+            { id: 294, text: "Untuk menjaga imej, saya berpura-pura faham kata orang", correct: "Tidak Setuju" },
+            { id: 295, text: "Saya jarang memberitahu apa yang saya fikirkan kepadamana-mana pihak", correct: "Tidak Setuju" },
+            { id: 296, text: "Adalah tanggungjawab guru memberitahu murid tentang ajaran kolot ibu bapanya", correct: "Tidak Setuju" },
+            { id: 297, text: "Apabila berlakunya kesilapan, saya hendak cari alasan demi melepaskan tanggungjawab", correct: "Tidak Setuju" },
+            { id: 298, text: "Jika ada orang sudi membuat kerja untuk saya, saya serahkan kerja kepadanya serta merta", correct: "Tidak Setuju" },
+            { id: 299, text: "Apabila bekerja dengan rakan sejawat, biasanya saya banyak memberi arahan daripada mengikuti kata mereka", correct: "Tidak Setuju" },
+            { id: 300, text: "Seseorang yang tidak mementingkan diri, suatu hari nanti akan menjadi mangsa", correct: "Tidak Setuju" },
+            { id: 301, text: "Jika prestasi kerja saya tidak memuaskan hati, saya akan tukar kerja yang lain", correct: "Tidak Setuju" },
+            { id: 302, text: "Orang yang memuji saya biasanya mempunyai niat jahat", correct: "Tidak Setuju" },
+            { id: 303, text: "Tugas berat boleh disiapkan melebihi masa yang ditetapkan", correct: "Tidak Setuju" },
+            { id: 304, text: "Orang yang menilai prestasi saya bertujuan menunjukkan status kedudukannya sahaja", correct: "Tidak Setuju" },
+            { id: 305, text: "Saya hanya baca buku dan majalah yang menghibur hati", correct: "Tidak Setuju" },
+            { id: 306, text: "Kita harus memenuhi keperluan diri sebelum memikir keperluan orang lain", correct: "Tidak Setuju" },
+            { id: 307, text: "Saya sering mengikut pemimpin kawan saya", correct: "Tidak Setuju" },
+            { id: 308, text: "Untuk mencapai kejayaan, menyalahgunakan kuasa pun tak apa", correct: "Tidak Setuju" },
+            { id: 309, text: "Saya sentiasa berusha bersungguh-sungguh dalam kerja yang saya mampu sahaja", correct: "Tidak Setuju" },
+            { id: 310, text: "Apa yang saya dengar, biasanya saya cepat lupa", correct: "Tidak Setuju" },
+            { id: 311, text: "Saya bekerja keras dengan harapan dapat kenaikan pangkat", correct: "Tidak Setuju" },
+            { id: 312, text: "Tidak perlu menghulur derma kepada mangsa banjir kerana telah ada ramai orang menderma", correct: "Tidak Setuju" },
+            { id: 313, text: "Saya hanya menangis dalam situasi yang amat sedih", correct: "Tidak Setuju" },
+            { id: 314, text: "Saya jarang menyertai akativiti sosial", correct: "Tidak Setuju" },
+            { id: 315, text: "Saya rasa kurang senang didampingi orang", correct: "Tidak Setuju" },
+            { id: 316, text: "Adalah terlalu sukar bagi saya memahami orang yang bertujuan menipu", correct: "Tidak Setuju" },
+            { id: 317, text: "Saya bukan orang kaya, jika tidak perlu saya menyumbang kebajikan", correct: "Tidak Setuju" },
+            { id: 318, text: "Saya sukakan kerja yang boleh menghukum orang", correct: "Tidak Setuju" },
+            { id: 319, text: "Jika seseorang dihukum berat, kita patut sampaikan rasa simpati", correct: "Tidak Setuju" },
+            { id: 320, text: "Saya tidak boleh kikiskan perasaan curiga terhadap niat orang", correct: "Tidak Setuju" },
+            { id: 321, text: "Rasa bangga harus diketahui umum", correct: "Tidak Setuju" },
+            { id: 322, text: "Saya melakukan kerja dengan cara melihat demi kejayaan", correct: "Tidak Setuju" },
+            { id: 323, text: "Saya pengikut idealisme, percaya semua adalah baik dan sempurna", correct: "Tidak Setuju" },
+            { id: 324, text: "Saya tidak meluahkan perasaan sebenar kepada sesiapa pun", correct: "Tidak Setuju" },
+            { id: 325, text: "Saya hanya suka berkawan dengan orang yang mengagumi saya", correct: "Tidak Setuju" },
+            { id: 326, text: "Selepas kerja, saya suka berada di rumah bersendirian", correct: "Tidak Setuju" },
+            { id: 327, text: "Saya seorang bernasib baik, saya tidak belajar bersungguh-sungguh pun boleh lulus peperiksaan dengan keputusan cemerlang", correct: "Tidak Setuju" },
+            { id: 328, text: "Saya tidak mudah mesra dengan orang asing", correct: "Tidak Setuju" },
+            { id: 329, text: "Saya mudah meradang jika ada orang main taktik kotor", correct: "Tidak Setuju" },
+            { id: 330, text: "Tidak adil bekerja lebih masa tanpa ganjaran", correct: "Tidak Setuju" },
+            { id: 331, text: "Tiada latihan formal pun boleh menjadi guru cemerlang jika ada bakat", correct: "Tidak Setuju" },
+            { id: 332, text: "Lebih baik biar orang lain ambil inisaitif", correct: "Tidak Setuju" },
+            { id: 333, text: "Saya tidak boleh kawal emosi marah apabila dituduh tanpa sebab", correct: "Tidak Setuju" },
+            { id: 334, text: "Dosa merebut keuntungan bukan halal boleh ditebus melalui memberi derma", correct: "Tidak Setuju" },
+            { id: 335, text: "Sumbangan saya tidak patut dilupai", correct: "Tidak Setuju" },
+            { id: 336, text: "Tiada salahnya mengikut prinsip 'suka hati' melakukan kerja", correct: "Tidak Setuju" }
+        ];
+
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let userAnswers = [];
+        let timerInterval;
+        let timeLeft = 0;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startExam() {
+            const timerInput = document.getElementById('timer-input').value;
+            const qCountType = document.querySelector('input[name="q-count"]:checked').value;
+            
+            timeLeft = parseInt(timerInput) * 60;
+            
+            let pool = [...questionBank];
+            shuffle(pool);
+            
+            if (qCountType === "200") {
+                currentQuestions = pool.slice(0, 200);
+            } else {
+                currentQuestions = pool;
+            }
+
+            currentIndex = 0;
+            userAnswers = [];
+            
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('exam-screen').classList.remove('hidden');
+            
+            startTimer();
+            showQuestion();
+        }
+
+        function startTimer() {
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    endExam();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            document.getElementById('timer-display').innerText = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            
+            if (timeLeft < 60) {
+                document.getElementById('timer-display').classList.add('text-red-600');
+            }
+        }
+
+        function showQuestion() {
+            const q = currentQuestions[currentIndex];
+            document.getElementById('question-text').innerText = q.text;
+            document.getElementById('progress-text').innerText = `Soalan ${currentIndex + 1} / ${currentQuestions.length}`;
+            
+            const progress = ((currentIndex) / currentQuestions.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+
+        function handleAnswer(answer) {
+            userAnswers.push({
+                questionId: currentQuestions[currentIndex].id,
+                text: currentQuestions[currentIndex].text,
+                userAnswer: answer,
+                correctAnswer: currentQuestions[currentIndex].correct,
+                isCorrect: answer === currentQuestions[currentIndex].correct
+            });
+
+            currentIndex++;
+            if (currentIndex < currentQuestions.length) {
+                showQuestion();
+            } else {
+                endExam();
+            }
+        }
+
+        function endExam() {
+            clearInterval(timerInterval);
+            document.getElementById('exam-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            const correctCount = userAnswers.filter(a => a.isCorrect).length;
+            const wrongCount = userAnswers.length - correctCount;
+
+            document.getElementById('final-score').innerText = `${correctCount}/${userAnswers.length}`;
+            document.getElementById('total-correct').innerText = correctCount;
+            document.getElementById('total-wrong').innerText = wrongCount;
+
+            const tableBody = document.getElementById('results-table-body');
+            tableBody.innerHTML = '';
+
+            userAnswers.forEach(ans => {
+                const row = document.createElement('tr');
+                if (ans.userAnswer === "Setuju") {
+                    row.className = "bg-red-50";
+                }
+                
+                row.innerHTML = `
+                    <td class="p-4 border-b text-sm font-mono">${ans.questionId}</td>
+                    <td class="p-4 border-b text-sm">${ans.text}</td>
+                    <td class="p-4 border-b text-sm font-bold ${ans.isCorrect ? 'text-green-600' : 'text-red-600'}">
+                        ${ans.isCorrect ? 'BETUL' : 'SALAH'}
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>

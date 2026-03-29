@@ -1,0 +1,5 @@
+{
+  "name": "UKCG Exam Simulator",
+  "description": "A comprehensive exam simulator for UKCG Bahagian A with 336 questions and timer functionality.",
+  "requestFramePermissions": []
+}
