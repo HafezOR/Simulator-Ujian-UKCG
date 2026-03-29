@@ -43,27 +43,75 @@
     </div>
 
     <!-- Exam Screen -->
-    <div id="exam-screen" class="hidden max-w-2xl mx-auto mt-6 p-4 fade-in">
-        <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-lg shadow-sm">
-            <div class="text-lg font-bold text-blue-600" id="timer-display">00:00</div>
-            <div class="text-sm font-semibold text-gray-500" id="progress-text">Soalan 1 / 200</div>
-        </div>
+    <div id="exam-screen" class="hidden max-w-4xl mx-auto mt-6 p-4 fade-in">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Left Side: Questions -->
+            <div class="lg:col-span-3">
+                <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-lg shadow-sm">
+                    <div class="text-lg font-bold text-blue-600" id="timer-display">00:00</div>
+                    <div class="text-sm font-semibold text-gray-500" id="progress-text">Soalan 1 / 200</div>
+                </div>
 
-        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
-            <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
-        </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
 
-        <div class="bg-white p-8 rounded-2xl shadow-xl mb-8 min-h-[200px] flex items-center justify-center text-center">
-            <p id="question-text" class="text-xl md:text-2xl font-semibold leading-relaxed"></p>
-        </div>
+                <div class="bg-white p-8 rounded-2xl shadow-xl mb-8 min-h-[200px] flex flex-col items-center justify-center text-center">
+                    <p id="question-text" class="text-xl md:text-2xl font-semibold leading-relaxed mb-8"></p>
+                    
+                    <div class="grid grid-cols-2 gap-4 w-full">
+                        <button id="btn-setuju" onclick="handleAnswer('Setuju')" class="bg-white border-2 border-green-500 text-green-600 font-bold py-6 rounded-2xl hover:bg-green-500 hover:text-white transition-all text-xl shadow-sm uppercase tracking-wider">
+                            Setuju
+                        </button>
+                        <button id="btn-tidak-setuju" onclick="handleAnswer('Tidak Setuju')" class="bg-white border-2 border-red-500 text-red-600 font-bold py-6 rounded-2xl hover:bg-red-500 hover:text-white transition-all text-xl shadow-sm uppercase tracking-wider">
+                            Tidak Setuju
+                        </button>
+                    </div>
+                </div>
 
-        <div class="grid grid-cols-2 gap-4">
-            <button onclick="handleAnswer('Setuju')" class="bg-white border-2 border-green-500 text-green-600 font-bold py-6 rounded-2xl hover:bg-green-500 hover:text-white transition-all text-xl shadow-sm uppercase tracking-wider">
-                Setuju
-            </button>
-            <button onclick="handleAnswer('Tidak Setuju')" class="bg-white border-2 border-red-500 text-red-600 font-bold py-6 rounded-2xl hover:bg-red-500 hover:text-white transition-all text-xl shadow-sm uppercase tracking-wider">
-                Tidak Setuju
-            </button>
+                <div class="flex justify-between items-center gap-4">
+                    <button onclick="prevQuestion()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-300 transition">
+                        Kembali
+                    </button>
+                    <button onclick="nextQuestion()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-300 transition">
+                        Seterusnya
+                    </button>
+                    <button onclick="confirmFinish()" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow-md">
+                        Tamat Ujian
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Side: Indicators -->
+            <div class="lg:col-span-1">
+                <div class="bg-white p-4 rounded-xl shadow-lg h-full max-h-[600px] flex flex-col">
+                    <h3 class="font-bold text-sm uppercase text-gray-500 mb-4">Penunjuk Soalan</h3>
+                    <div id="indicator-grid" class="grid grid-cols-5 gap-2 overflow-y-auto pr-2 flex-1">
+                        <!-- Indicators injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center">
+            <div class="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Tamat Ujian?</h3>
+            <p id="modal-msg" class="text-gray-600 mb-8">Anda masih mempunyai soalan yang belum dijawab. Adakah anda pasti mahu menamatkan ujian?</p>
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200 transition">
+                    Batal
+                </button>
+                <button onclick="endExam()" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">
+                    Ya, Tamat
+                </button>
+            </div>
         </div>
     </div>
 
@@ -453,7 +501,7 @@
 
         let currentQuestions = [];
         let currentIndex = 0;
-        let userAnswers = [];
+        let userAnswers = []; // Array of size currentQuestions.length
         let timerInterval;
         let timeLeft = 0;
 
@@ -469,6 +517,11 @@
             const timerInput = document.getElementById('timer-input').value;
             const qCountType = document.querySelector('input[name="q-count"]:checked').value;
             
+            if (!timerInput || timerInput <= 0) {
+                alert("Sila masukkan masa yang sah.");
+                return;
+            }
+
             timeLeft = parseInt(timerInput) * 60;
             
             let pool = [...questionBank];
@@ -481,12 +534,13 @@
             }
 
             currentIndex = 0;
-            userAnswers = [];
+            userAnswers = new Array(currentQuestions.length).fill(null);
             
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('exam-screen').classList.remove('hidden');
             
             startTimer();
+            renderIndicators();
             showQuestion();
         }
 
@@ -496,6 +550,7 @@
                 timeLeft--;
                 updateTimerDisplay();
                 if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
                     endExam();
                 }
             }, 1000);
@@ -504,11 +559,11 @@
         function updateTimerDisplay() {
             const mins = Math.floor(timeLeft / 60);
             const secs = timeLeft % 60;
-            document.getElementById('timer-display').innerText = 
-                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            const display = document.getElementById('timer-display');
+            display.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             
-            if (timeLeft < 60) {
-                document.getElementById('timer-display').classList.add('text-red-600');
+            if (timeLeft < 300) { // 5 mins
+                display.classList.add('text-red-600');
             }
         }
 
@@ -517,57 +572,150 @@
             document.getElementById('question-text').innerText = q.text;
             document.getElementById('progress-text').innerText = `Soalan ${currentIndex + 1} / ${currentQuestions.length}`;
             
-            const progress = ((currentIndex) / currentQuestions.length) * 100;
+            const progress = ((currentIndex + 1) / currentQuestions.length) * 100;
             document.getElementById('progress-bar').style.width = `${progress}%`;
+
+            // Reset button styles
+            const btnSetuju = document.getElementById('btn-setuju');
+            const btnTidakSetuju = document.getElementById('btn-tidak-setuju');
+            
+            btnSetuju.className = "bg-white border-2 border-green-500 text-green-600 font-bold py-6 rounded-2xl hover:bg-green-500 hover:text-white transition-all text-xl shadow-sm uppercase tracking-wider";
+            btnTidakSetuju.className = "bg-white border-2 border-red-500 text-red-600 font-bold py-6 rounded-2xl hover:bg-red-500 hover:text-white transition-all text-xl shadow-sm uppercase tracking-wider";
+
+            // Highlight selected answer
+            if (userAnswers[currentIndex] === 'Setuju') {
+                btnSetuju.className = "bg-green-500 border-2 border-green-500 text-white font-bold py-6 rounded-2xl transition-all text-xl shadow-inner uppercase tracking-wider";
+            } else if (userAnswers[currentIndex] === 'Tidak Setuju') {
+                btnTidakSetuju.className = "bg-red-500 border-2 border-red-500 text-white font-bold py-6 rounded-2xl transition-all text-xl shadow-inner uppercase tracking-wider";
+            }
+
+            updateActiveIndicator();
         }
 
         function handleAnswer(answer) {
-            userAnswers.push({
-                questionId: currentQuestions[currentIndex].id,
-                text: currentQuestions[currentIndex].text,
-                userAnswer: answer,
-                correctAnswer: currentQuestions[currentIndex].correct,
-                isCorrect: answer === currentQuestions[currentIndex].correct
-            });
-
-            currentIndex++;
-            if (currentIndex < currentQuestions.length) {
+            userAnswers[currentIndex] = answer;
+            updateIndicator(currentIndex, true);
+            
+            if (currentIndex < currentQuestions.length - 1) {
+                currentIndex++;
                 showQuestion();
             } else {
-                endExam();
+                showQuestion(); // Stay on last question but update UI
             }
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                showQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentIndex < currentQuestions.length - 1) {
+                currentIndex++;
+                showQuestion();
+            }
+        }
+
+        function renderIndicators() {
+            const grid = document.getElementById('indicator-grid');
+            grid.innerHTML = '';
+            currentQuestions.forEach((_, index) => {
+                const btn = document.createElement('button');
+                btn.id = `ind-${index}`;
+                btn.textContent = index + 1;
+                btn.onclick = () => {
+                    currentIndex = index;
+                    showQuestion();
+                };
+                btn.className = "w-full aspect-square flex items-center justify-center text-[10px] font-bold rounded-lg border transition-all " + 
+                                (userAnswers[index] ? "bg-green-500 border-green-600 text-white" : "bg-gray-100 border-gray-200 text-gray-400");
+                grid.appendChild(btn);
+            });
+        }
+
+        function updateIndicator(index, answered) {
+            const btn = document.getElementById(`ind-${index}`);
+            if (btn) {
+                btn.className = "w-full aspect-square flex items-center justify-center text-[10px] font-bold rounded-lg border transition-all " + 
+                                (answered ? "bg-green-500 border-green-600 text-white" : "bg-gray-100 border-gray-200 text-gray-400");
+            }
+        }
+
+        function updateActiveIndicator() {
+            document.querySelectorAll('[id^="ind-"]').forEach(el => el.classList.remove('ring-2', 'ring-blue-400', 'ring-offset-1'));
+            const current = document.getElementById(`ind-${currentIndex}`);
+            if (current) {
+                current.classList.add('ring-2', 'ring-blue-400', 'ring-offset-1');
+                current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function confirmFinish() {
+            const unansweredCount = userAnswers.filter(a => a === null).length;
+            const modal = document.getElementById('confirm-modal');
+            const msg = document.getElementById('modal-msg');
+            
+            if (unansweredCount > 0) {
+                msg.textContent = `Terdapat ${unansweredCount} soalan yang belum dijawab. Adakah anda pasti mahu menamatkan ujian sekarang?`;
+            } else {
+                msg.textContent = "Tahniah! Anda telah menjawab semua soalan. Adakah anda mahu menghantar jawapan anda?";
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
         }
 
         function endExam() {
             clearInterval(timerInterval);
+            closeModal();
+            
+            let correctCount = 0;
+            let wrongCount = 0;
+            let resultsHtml = '';
+
+            currentQuestions.forEach((q, index) => {
+                const answer = userAnswers[index];
+                let status = '';
+                let statusClass = '';
+
+                if (answer === null) {
+                    status = 'Not Answer';
+                    statusClass = 'text-gray-500 font-bold italic';
+                    wrongCount++;
+                } else if (answer === q.correct) {
+                    status = 'Betul';
+                    statusClass = 'text-green-600 font-bold';
+                    correctCount++;
+                } else {
+                    status = 'Salah';
+                    statusClass = 'text-red-600 font-bold';
+                    wrongCount++;
+                }
+
+                const rowBg = answer === 'Setuju' ? 'bg-red-50' : '';
+
+                resultsHtml += `
+                    <tr class="border-b hover:bg-gray-50 transition ${rowBg}">
+                        <td class="p-3 text-center font-mono text-sm text-gray-500">${q.id}</td>
+                        <td class="p-3 text-sm">${q.text}</td>
+                        <td class="p-3 text-center ${statusClass}">${status}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('final-score').textContent = `${correctCount} / ${currentQuestions.length}`;
+            document.getElementById('total-correct').textContent = correctCount;
+            document.getElementById('total-wrong').textContent = wrongCount;
+            document.getElementById('results-table-body').textContent = ''; // Clear it
+            document.getElementById('results-table-body').innerHTML = resultsHtml;
+
             document.getElementById('exam-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
-
-            const correctCount = userAnswers.filter(a => a.isCorrect).length;
-            const wrongCount = userAnswers.length - correctCount;
-
-            document.getElementById('final-score').innerText = `${correctCount}/${userAnswers.length}`;
-            document.getElementById('total-correct').innerText = correctCount;
-            document.getElementById('total-wrong').innerText = wrongCount;
-
-            const tableBody = document.getElementById('results-table-body');
-            tableBody.innerHTML = '';
-
-            userAnswers.forEach(ans => {
-                const row = document.createElement('tr');
-                if (ans.userAnswer === "Setuju") {
-                    row.className = "bg-red-50";
-                }
-                
-                row.innerHTML = `
-                    <td class="p-4 border-b text-sm font-mono">${ans.questionId}</td>
-                    <td class="p-4 border-b text-sm">${ans.text}</td>
-                    <td class="p-4 border-b text-sm font-bold ${ans.isCorrect ? 'text-green-600' : 'text-red-600'}">
-                        ${ans.isCorrect ? 'BETUL' : 'SALAH'}
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
         }
     </script>
 </body>
